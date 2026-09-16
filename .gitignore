@@ -1,0 +1,7 @@
+c-billing-system
+*.o
+*.out
+*.bin
+
+.vscode/
+.DS_Store
