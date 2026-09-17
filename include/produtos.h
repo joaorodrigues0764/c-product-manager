@@ -23,7 +23,7 @@ void iva_carregar(const char *ficheiro, int iva_tabela[]);
  * @param ean string com o código EAN
  * @return 1 se válido, 0 caso contrário
  */
-int validacao_ian(const char *ean);
+int validacao_ean(const char *ean);
 
 /**
  * Executa o comando p: adiciona ou actualiza um produto.

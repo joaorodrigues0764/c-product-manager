@@ -44,46 +44,38 @@ void iva_carregar(const char *nome_ficheiro, int tabela_iva[]) {
 
 /**
  * Valida o dígito de verificação de um EAN-8 ou EAN-13.
- * EAN-13: posições pares peso 1, ímpares peso 3.
- * EAN-8:  mesmo esquema de pesos.
+ * GTIN-13: positions alternate weights 1 and 3, starting with 1.
+ * GTIN-8: positions alternate weights 3 and 1, starting with 3.
  * @param ean string com o código EAN
  * @return 1 se válido, 0 caso contrário
  */
-int validacao_ian(const char *ean) {
-    int len = strlen(ean);
+int validacao_ean(const char *ean) {
+    int len = (int)strlen(ean);
     int soma = 0;
+
     if (len != 8 && len != 13) {
         return 0;
     }
-    for (int h = 0; h < len; h++) {
-        if (ean[h] < '0' || ean[h] > '9') {
+
+    for (int i = 0; i < len; i++) {
+        if (ean[i] < '0' || ean[i] > '9') {
             return 0;
         }
     }
-    if (len == 13) {
-        for (int i = 0; i < (len-1); i++) {
-            if (i % 2 == 0) {
-                soma += (ean[i] - '0');
-            }
-            else {
-                soma += (ean[i] - '0')*3;
-            }
+
+    for (int i = 0; i < len - 1; i++) {
+        int peso;
+        if (len == 8) {
+            /* GTIN-8 starts with weight 3. */
+            peso = (i % 2 == 0) ? 3 : 1;
+        } else {
+            /* GTIN-13 starts with weight 1. */
+            peso = (i % 2 == 0) ? 1 : 3;
         }
+        soma += (ean[i] - '0') * peso;
     }
-    else {
-        for (int i = 0; i < (len-1); i++) {
-            if (i % 2 == 0) {
-                soma += (ean[i] - '0');
-            }
-            else {
-                soma += (ean[i] - '0')*3;
-            }
-        }
-    }
-    if ((ean[len-1] - '0') != ((10 - (soma%10)) % 10)) {
-        return 0;
-    }
-    return 1;
+
+    return (ean[len - 1] - '0') == ((10 - (soma % 10)) % 10);
 }
 
 /**
@@ -139,14 +131,14 @@ void comando_p(const char *linha, Produto produtos[], int *num_produtos,
 		while (*p && isspace((unsigned char)*p)) p++;
 		{
 			int i = 0;
-			while (*p && *p != '\n' && i <= (int)MAX_DESC) {
+			while (*p && *p != '\n' && i < (int)MAX_DESC) {
 				desc[i++] = *p++;
 			}
 			desc[i] = '\0';
 		}
 	}
 
-    if (!validacao_ian(ean)) {
+    if (!validacao_ean(ean)) {
         printf("invalid ean\n");
         return;
     }
@@ -362,7 +354,7 @@ static void produto_remover(Produto produtos[], int *num_produtos, int indice) {
 void comando_d_produto(const char *ean, int qtd, Produto produtos[], int *num_produtos, int cesto_tem_produto(int)) {
     int i, encontrado = -1;
 
-    if (!validacao_ian(ean)) {
+    if (!validacao_ean(ean)) {
         printf("invalid ean\n");
         return;
     }

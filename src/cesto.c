@@ -189,7 +189,7 @@ void comando_a(const char *linha, Produto produtos[], int num_produtos,
         strcpy(ean, aux2);
     }
 
-    if (validacao_ian(ean) == 0) {
+    if (validacao_ean(ean) == 0) {
         printf("invalid ean\n");
         return;
     }

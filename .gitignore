@@ -1,7 +1,17 @@
+# Build artifacts
 c-billing-system
+proj
 *.o
-*.out
-*.bin
+*.a
 
+# Test artifacts
+*.myout
+*.diff
+tests.log
+
+# Editor / OS files
 .vscode/
+.idea/
 .DS_Store
+*.swp
+*~

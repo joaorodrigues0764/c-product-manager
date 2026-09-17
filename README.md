@@ -1,73 +1,98 @@
 # C Billing & Inventory System
 
-A high-performance command-line billing and inventory management system written entirely in C. This project handles product registration, dynamic shopping cart management, VAT calculations, and invoice generation, designed to simulate a real-world Point of Sale (POS) backend.
+A modular command-line billing and inventory system written in C. The project
+manages products, stock, shopping carts, VAT rates, customers, and invoices
+using dynamic memory and linked data structures.
 
-## 🚀 Features
+## Features
 
-- **Inventory Management:** Register up to 10,000 unique products with details including description, EAN-8/EAN-13 barcode, price, stock quantity, and VAT class.
-- **Barcode Validation:** Built-in EAN-8 and EAN-13 checksum validation to ensure data integrity during product entry.
-- **Dynamic Shopping Cart:** Add or remove items from an active shopping cart with automatic stock tracking.
-- **Invoicing System:** Generate chronological invoices tied to specific customer NIFs (Tax Identification Numbers) and names.
-- **Custom VAT Rates:** Support for external configuration files mapping VAT classes (e.g., A, B, C, D) to specific percentage rates.
-- **Memory Efficient:** Dynamically allocates memory only when needed and ensures clean memory release upon exit.
+- Product registration and stock management for up to 10,000 products.
+- EAN-8 and EAN-13 checksum validation.
+- Shopping cart management with stock tracking.
+- Invoice generation with customer NIFs and names.
+- VAT rates loaded from a configuration file.
+- Product filtering with `*` and `?` wildcards.
+- Invoice listing, filtering, deletion, and client NIF updates.
+- Explicit memory management with cleanup on normal termination.
 
-## 🛠️ Architecture
+## Project Structure
 
-The system is modularized into a standard C project structure for maintainability and scalability:
+```text
+.
+├── include/              # Public headers and shared data structures
+├── src/                  # Application source code
+├── tests/                # Regression inputs and expected outputs
+├── .github/workflows/    # Continuous integration
+├── .gitignore
+├── Makefile
+└── README.md
+```
 
-- `src/` - Contains the implementation files (`.c`), handling logic for products, invoices, cart operations, and the main entry point.
-- `include/` - Contains the header files (`.h`) defining the data structures and function prototypes.
+## Build
 
-## ⚙️ Build and Run
+Requirements:
 
-The project includes a `Makefile` for easy compilation.
-
-### Prerequisites
-- GCC Compiler (version 7 or higher recommended)
+- GCC
 - Make
 
-### Compilation
-To build the project, simply run the following command in the root directory:
+Build the project from the repository root:
 
 ```bash
 make
 ```
-This will compile the source files and generate an executable named `c-billing-system`.
 
-### Execution
-Run the system via the terminal:
+This creates the `c-billing-system` executable.
+
+Run it directly or pipe commands from a file:
 
 ```bash
 ./c-billing-system
-```
-You can also run it by piping an input file containing a sequence of commands:
-```bash
-./c-billing-system < inputs.txt
+./c-billing-system < input.txt
 ```
 
-### Cleanup
-To remove the compiled executable and object files:
+An optional VAT configuration file can be passed as the first argument:
+
+```bash
+./c-billing-system path/to/vat.txt
+```
+
+Clean generated build artifacts with:
+
 ```bash
 make clean
 ```
 
-## 📋 Commands Overview
+## Tests
 
-The system interacts via single-letter commands followed by necessary arguments. Here are the core commands supported:
+The repository contains a regression suite covering product validation,
+inventory and cart operations, invoicing, client filtering, and NIF updates.
 
-| Command | Action |
+Run the complete suite with:
+
+```bash
+make test
+```
+
+The tests are also executed automatically by GitHub Actions on pushes and
+pull requests.
+
+## Command Overview
+
+| Command | Description |
 | :---: | :--- |
-| **`p`** | Register or update a product (`p <ean> <vat_class> <price> <qty> <description>`) |
-| **`l`** | List available products in the system. Supports wildcard (`*`, `?`) filtering. |
-| **`a`** | Add or remove items from the current shopping cart (`a [qty] <ean>`) |
-| **`r`** | Display global billing summary or check stock for a specific product. |
-| **`f`** | Checkout the cart and generate an invoice (`f [nif] <customer_name>`) |
-| **`c`** | List all generated invoices, optionally filtered by a specific customer. |
-| **`d`** | Delete a specific invoice or reduce stock of a product. |
-| **`q`** | Quit the program and free all allocated memory. |
+| `p` | Register a product or update an existing product. |
+| `l` | List products, optionally filtered by EAN wildcards. |
+| `a` | Add or remove quantities from the active cart; without arguments, list the cart. |
+| `r` | Show global billing information or product stock information. |
+| `f` | Create an invoice for the current cart. |
+| `c` | List invoices, optionally filtered by amount and/or client. |
+| `v` | Update the NIF associated with a client. |
+| `d` | Reduce product stock or delete an invoice. |
+| `q` | Exit and release allocated memory. |
 
-## 🛡️ Quality Assurance
+## Technical Focus
 
-The code is strictly validated using:
-- **Valgrind & AddressSanitizer:** To guarantee zero memory leaks and safe memory access patterns.
-- **Compiler Flags:** Compiled with `-O3 -Wall -Wextra -Werror` to ensure optimized, warning-free code.
+The implementation uses modular C source files, header interfaces, linked
+lists for carts and invoices, fixed-size product storage, dynamic allocation
+for variable-length data, input parsing, barcode validation, and explicit
+resource cleanup.

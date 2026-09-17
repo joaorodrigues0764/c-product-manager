@@ -14,6 +14,15 @@ static int total_faturas_emitidas = 0;
 /* Valor total facturado nas facturas activas. */
 static double valor_total_global = 0.0;
 
+
+static char *duplicar_string(const char *s) {
+    size_t tamanho = strlen(s) + 1;
+    char *copia = (char *)malloc(tamanho);
+    if (copia != NULL) {
+        memcpy(copia, s, tamanho);
+    }
+    return copia;
+}
 /**
  * Liberta a lista de itens de uma factura.
  * @param f factura cujos itens se libertam
@@ -62,7 +71,7 @@ void comando_r(const char *linha, Produto produtos[], int num_produtos,
         return;
     }
     if (sscanf(p, "%s", ean_procurado) == 1) {
-        if (validacao_ian(ean_procurado) == 0) {
+        if (validacao_ean(ean_procurado) == 0) {
             printf("invalid ean\n");
             return;
         }
@@ -263,9 +272,14 @@ void comando_f(const char *linha, Produto produtos[], int iva_tabela[]) {
     double valor_fatura = calcular_total_cesto(lista_cesto, produtos, iva_tabela);
 
     Fatura *nova = (Fatura *)malloc(sizeof(Fatura));
-    nova->nome_cliente = strdup(nome_final);
-    
-    if (nova == NULL || nova->nome_cliente == NULL) {
+    if (nova == NULL) {
+        printf("No memory.\n");
+        exit(1);
+    }
+
+    nova->nome_cliente = duplicar_string(nome_final);
+    if (nova->nome_cliente == NULL) {
+        free(nova);
         printf("No memory.\n");
         exit(1);
     }
@@ -280,13 +294,20 @@ void comando_f(const char *linha, Produto produtos[], int iva_tabela[]) {
     ItemCesto *it = lista_cesto;
     while (it != NULL) {
         ItemFatura *item_f = (ItemFatura *)malloc(sizeof(ItemFatura));
+        if (item_f == NULL) {
+            itens_libertar(nova);
+            free(nova->nome_cliente);
+            free(nova);
+            printf("No memory.\n");
+            exit(1);
+        }
+
         int idx = it->idx_produto;
-        
         item_f->idx_produto = idx;
         item_f->quantidade = it->quantidade;
         item_f->preco_unit = produtos[idx].preco;
         item_f->iva = produtos[idx].iva;
-        
+
         item_f->prox = nova->itens;
         nova->itens = item_f;
         /* vendido já foi incrementado quando o produto entrou no cesto */
