@@ -1,9 +1,9 @@
-#include "produtos.h"
-#include "faturas.h"
-#include "cesto.h"
+#include "products.h"
+#include "invoices.h"
+#include "basket.h"
 
 /*
-Liberta toda a memória antes de terminar.
+Frees all memory before exiting.
  */
 static void terminar(void) {
 	cesto_libertar();
@@ -11,18 +11,18 @@ static void terminar(void) {
 }
 
 /**
- * Inicializa o sistema, lê comandos em ciclo e despacha-os.
- * As estruturas de dados (produtos e IVA) vivem aqui como variáveis locais
- * e são passadas por ponteiro a cada função que precisa delas.
- * @param argc número de argumentos da linha de comando
- * @param argv argumentos: argv[1] é o ficheiro de IVA opcional
- * @return 0 em caso de sucesso
+ * Initializes the system, reads commands in a loop, and dispatches them.
+ * Data structures (products and VAT) live here as local variables
+ * and are passed by pointer to each function that needs them.
+ * @param argc number of command line arguments
+ * @param argv arguments: argv[1] is the optional VAT file
+ * @return 0 on success
  */
 int main(int argc, char *argv[]) {
-	Produto produtos[MAX_PRODUTOS]; /* Array de produtos registados. */
-	int iva_tabela[MAX_IVA];        /* Tabela de taxas de IVA por letra. */
-	int num_produtos = 0;           /* Número actual de produtos. */
-	char linha[MAX_LINHA];          /* Buffer para leitura de cada linha. */
+	Produto produtos[MAX_PRODUTOS]; /* Array of registered products. */
+	int iva_tabela[MAX_IVA];        /* VAT rate table by letter. */
+	int num_produtos = 0;           /* Current number of products. */
+	char linha[MAX_LINHA];          /* Buffer for reading each line. */
 	char comando;
 
 	if (argc >= 2)
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 		if (sscanf(linha, " %c", &comando) != 1)
 			continue;
 
-		/* Aponta para o início dos argumentos do comando */
+		/* Points to the start of the command arguments */
 		char *resto = linha + 1;
 		while (*resto && isspace((unsigned char)*resto) && *resto != '\n')
 			resto++;
@@ -80,10 +80,10 @@ int main(int argc, char *argv[]) {
                 }
 
                 tamanho_token = strlen(aux1);
-				/* EAN tem 8 ou 13 dígitos; qualquer outra coisa é número de factura */
+				/* EAN has 8 or 13 digits; anything else is an invoice number */
                 if (tamanho_token == 8 || tamanho_token == 13) {
                     int quantidade_para_remover;
-                    
+
                     if (n_lidos == 2) {
                         quantidade_para_remover = atoi(aux2);
                     } else {
@@ -94,14 +94,14 @@ int main(int argc, char *argv[]) {
 
                     comando_d_produto(ean_ou_nif, quantidade_para_remover, produtos,
                         &num_produtos, cesto_tem_produto);
-                } 
+                }
                 else {
                     int numero_fatura;
                     numero_fatura = atoi(aux1);
 
                     if (procura_fatura_existe(numero_fatura) == 1) {
                         comando_d_fatura(numero_fatura);
-                    } 
+                    }
                     else {
                         printf("%d: no such invoice\n", numero_fatura);
                     }

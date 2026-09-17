@@ -1,17 +1,17 @@
-#include "faturas.h"
-#include "produtos.h"
-#include "cesto.h"
+#include "invoices.h"
+#include "products.h"
+#include "basket.h"
 
-/* Lista ligada de facturas emitidas, por ordem cronológica. */
+/* Linked list of issued invoices, in chronological order. */
 static Fatura *faturas = NULL;
- 
-/* Total de unidades compradas em todas as facturas activas. */
+
+/* Total of purchased units in all active invoices. */
 static int total_itens_global = 0;
- 
-/* Número de facturas já emitidas (não decrementa com eliminações). */
+
+/* Number of invoices already issued (does not decrement with deletions). */
 static int total_faturas_emitidas = 0;
- 
-/* Valor total facturado nas facturas activas. */
+
+/* Total billed amount in active invoices. */
 static double valor_total_global = 0.0;
 
 
@@ -24,8 +24,8 @@ static char *duplicar_string(const char *s) {
     return copia;
 }
 /**
- * Liberta a lista de itens de uma factura.
- * @param f factura cujos itens se libertam
+ * Frees the item list of an invoice.
+ * @param f invoice whose items are freed
  */
 static void itens_libertar(Fatura *f) {
     ItemFatura *atual;
@@ -41,13 +41,13 @@ static void itens_libertar(Fatura *f) {
 }
 
 /**
- * Executa o comando r: resumo de facturação.
- * Sem args: imprime totais globais e tabela de IVA por ordem alfabética.
- * Com EAN: imprime stock e vendido do produto indicado.
- * @param linha resto da linha após o 'r'
- * @param produtos array de produtos
- * @param num_produtos número de produtos registados
- * @param iva_tabela tabela de IVA
+ * Executes command 'r': billing summary.
+ * No args: prints global totals and VAT table in alphabetical order.
+ * With EAN: prints stock and sold quantity of the specified product.
+ * @param linha rest of the line after 'r'
+ * @param produtos array of products
+ * @param num_produtos number of registered products
+ * @param iva_tabela VAT table
  */
 void comando_r(const char *linha, Produto produtos[], int num_produtos,
         int iva_tabela[]) {
@@ -93,13 +93,13 @@ void comando_r(const char *linha, Produto produtos[], int num_produtos,
 }
 
 /**
- * Verifica se uma string é um NIF válido (exactamente 9 dígitos).
- * @param s string a verificar
- * @return 1 se válido, 0 caso contrário
+ * Checks if a string is a valid NIF (exactly 9 digits).
+ * @param s string to check
+ * @return 1 if valid, 0 otherwise
  */
 static int nif_valido(const char *s) {
     if (strlen(s) != 9) return 0;
-    
+
     for (int i = 0; i < 9; i++) {
         if (!isdigit((unsigned char)s[i])) return 0;
     }
@@ -107,22 +107,22 @@ static int nif_valido(const char *s) {
 }
 
 /**
- * Verifica se uma string é um nome de cliente válido (começa por letra).
- * @param s string a verificar
- * @return 1 se válido, 0 caso contrário
+ * Checks if a string is a valid customer name (starts with a letter).
+ * @param s string to check
+ * @return 1 if valid, 0 otherwise
  */
 static int nome_valido(const char *s) {
     return s != NULL && *s != '\0' && isalpha((unsigned char)*s);
 }
 
 /**
- * Lê o nome do cliente a partir de p, com suporte a aspas.
- * Nome entre aspas: lê até à aspa de fecho.
- * Nome sem aspas: lê até ao fim da linha.
- * @param p ponteiro para o início do nome
- * @param dest buffer de destino
- * @param max tamanho máximo do buffer
- * @return número de bytes lidos, ou -1 se a aspa de fecho faltar
+ * Reads the customer name starting from p, with support for quotes.
+ * Name in quotes: reads until the closing quote.
+ * Name without quotes: reads until the end of the line.
+ * @param p pointer to the start of the name
+ * @param dest destination buffer
+ * @param max maximum buffer size
+ * @return number of read bytes, or -1 if the closing quote is missing
  */
 static int ler_nome(const char *p, char *dest, int max) {
     int i = 0;
@@ -143,13 +143,13 @@ static int ler_nome(const char *p, char *dest, int max) {
 
 
 /**
- * Calcula o valor total do cesto com IVA e arredondamento simétrico.
- * O arredondamento é feito por linha e depois no total final.
- * O epsilon 1e-9 evita erros de representação IEEE 754.
- * @param lista cabeça da lista do cesto
- * @param produtos array de produtos
- * @param iva_tabela tabela de IVA
- * @return valor total com IVA
+ * Calculates the total cart value with VAT and symmetric rounding.
+ * Rounding is done per line and then on the final total.
+ * The 1e-9 epsilon prevents IEEE 754 representation errors.
+ * @param lista head of the cart list
+ * @param produtos array of products
+ * @param iva_tabela VAT table
+ * @return total value with VAT
  */
 static double calcular_total_cesto(ItemCesto *lista, Produto produtos[], int iva_tabela[]) {
     double total = 0.0;
@@ -158,11 +158,11 @@ static double calcular_total_cesto(ItemCesto *lista, Produto produtos[], int iva
     while (atual != NULL) {
         int idx = atual->idx_produto;
         int taxa = iva_tabela[produtos[idx].iva - 'A'];
-        
+
         double preco_com_iva = produtos[idx].preco * (1.0 + taxa / 100.0);
         double linha = preco_com_iva * atual->quantidade;
 
-        /* Epsilon absorve erros de representação IEEE 754 */
+        /* Epsilon absorbs IEEE 754 representation errors */
         linha = (int)(linha * 100.0 + 0.5 + 1e-9) / 100.0;
         total += linha;
         atual = atual->prox;
@@ -171,9 +171,9 @@ static double calcular_total_cesto(ItemCesto *lista, Produto produtos[], int iva
 }
 
 /**
- * Conta o total de unidades no cesto.
- * @param lista cabeça da lista do cesto
- * @return soma das quantidades de todos os itens
+ * Counts the total units in the cart.
+ * @param lista head of the cart list
+ * @return sum of the quantities of all items
  */
 static int contar_itens_cesto(ItemCesto *lista) {
     int conta = 0;
@@ -186,29 +186,29 @@ static int contar_itens_cesto(ItemCesto *lista) {
 }
 
 /**
- * Devolve todos os produtos do cesto ao stock e reverte o vendido.
- * Chamado quando o nome do cliente é "error".
- * @param lista cabeça da lista do cesto
- * @param produtos array de produtos
+ * Returns all cart products to stock and reverts the sold amount.
+ * Called when the customer name is "error".
+ * @param lista head of the cart list
+ * @param produtos array of products
  */
 static void devolver_cesto_ao_stock(ItemCesto *lista, Produto produtos[]) {
     ItemCesto *atual = lista;
     while (atual != NULL) {
         produtos[atual->idx_produto].stock += atual->quantidade;
-        /* Reverte o vendido que foi contado ao adicionar ao cesto */
+        /* Reverts the sold amount that was counted when adding to the cart */
         produtos[atual->idx_produto].vendido -= atual->quantidade;
         atual = atual->prox;
     }
 }
 
 /**
- * Executa o comando f: factura os produtos no cesto.
- * Sem args: usa NIF 999999999 e nome "Cliente final".
- * Com nome "error": devolve tudo ao stock sem emitir factura.
- * O número de factura é sequencial e nunca é reutilizado.
- * @param linha resto da linha após o 'f'
- * @param produtos array de produtos
- * @param iva_tabela tabela de IVA
+ * Executes command 'f': invoices the products in the cart.
+ * No args: uses NIF 999999999 and name "Cliente final".
+ * With name "error": returns everything to stock without issuing an invoice.
+ * The invoice number is sequential and is never reused.
+ * @param linha rest of the line after 'f'
+ * @param produtos array of products
+ * @param iva_tabela VAT table
  */
 void comando_f(const char *linha, Produto produtos[], int iva_tabela[]) {
     static int contador_faturas = 1;
@@ -243,7 +243,7 @@ void comando_f(const char *linha, Produto produtos[], int iva_tabela[]) {
             for (int k = 0; primeiro_token[k]; k++) {
                 if (!isdigit((unsigned char)primeiro_token[k])) so_numeros = 0;
             }
-            
+
             if (so_numeros) {
                 printf("%s: no such nif\n", primeiro_token);
                 return;
@@ -310,7 +310,7 @@ void comando_f(const char *linha, Produto produtos[], int iva_tabela[]) {
 
         item_f->prox = nova->itens;
         nova->itens = item_f;
-        /* vendido já foi incrementado quando o produto entrou no cesto */
+        /* sold amount was already incremented when the product entered the cart */
         it = it->prox;
     }
 
@@ -331,15 +331,15 @@ void comando_f(const char *linha, Produto produtos[], int iva_tabela[]) {
 }
 
 /**
- * Imprime uma factura no formato do comando c:
- * <número> <valor> <nome-cliente>
- * @param f factura a imprimir
+ * Prints an invoice in the format of command 'c':
+ * <number> <value> <customer-name>
+ * @param f invoice to print
  */
 static void imprimir_fatura(const Fatura *f) {
     printf("%d %.2f %s %d\n", f->numero, f->valor_pago, f->nome_cliente, f->nif);
 }
 
-static void listar_todas_faturas_filtro(double valor_min) {                         
+static void listar_todas_faturas_filtro(double valor_min) {
     int total = 0;
     Fatura *temp = faturas;
 
@@ -394,7 +394,7 @@ static void listar_todas_faturas_filtro(double valor_min) {
     free(visitados);
 }
 
-void comando_c(const char *linha) {                                             
+void comando_c(const char *linha) {
     const char *p = linha;
 
     while (*p && isspace((unsigned char)*p)) p++;
@@ -404,7 +404,7 @@ void comando_c(const char *linha) {
         return;
     }
 
-    /* Tenta ler um valor numerico como primeiro token */
+    /* Tries to read a numeric value as the first token */
     {
         const char *aux = p;
         int i = 0;
@@ -429,7 +429,7 @@ void comando_c(const char *linha) {
                 return;
             }
 
-            /* valor + nome */
+            /* value + name */
             char nome_busca[MAX_LINHA];
             if (ler_nome(p, nome_busca, MAX_LINHA) < 0 || !nome_valido(nome_busca)) {
                 printf("invalid name\n");
@@ -450,7 +450,7 @@ void comando_c(const char *linha) {
         }
     }
 
-    /* Sem valor: nome como argumento */
+    /* No value: name as argument */
     {
         char nome_busca[MAX_LINHA];
         if (ler_nome(p, nome_busca, MAX_LINHA) < 0 || !nome_valido(nome_busca)) {
@@ -470,7 +470,7 @@ void comando_c(const char *linha) {
     }
 }
 
-static int nif_valido_str(const char *s) {                                     
+static int nif_valido_str(const char *s) {
     if (strlen(s) != 9) return 0;
     for (int i = 0; i < 9; i++) {
         if (!isdigit((unsigned char)s[i])) return 0;
@@ -542,9 +542,9 @@ void comando_v(const char *linha) {
 }
 
 /**
- * Procura uma factura pelo número.
- * @param num número da factura
- * @return ponteiro para a Fatura, ou NULL se não existir
+ * Searches for an invoice by its number.
+ * @param num invoice number
+ * @return pointer to the Fatura, or NULL if it doesn't exist
  */
 static Fatura *procura_fatura(int num) {
     Fatura *f = faturas;
@@ -556,19 +556,19 @@ static Fatura *procura_fatura(int num) {
 }
 
 /**
- * Verifica se existe uma factura com o número indicado.
- * @param num número da factura
- * @return 1 se existe, 0 caso contrário
+ * Checks if an invoice with the specified number exists.
+ * @param num invoice number
+ * @return 1 if it exists, 0 otherwise
  */
 int procura_fatura_existe(int num) {
     return procura_fatura(num) != NULL;
 }
 
 /**
- * Executa o modo factura do comando d: remove a factura indicada.
- * Decrementa os totais globais de itens e valor (não o de facturas emitidas).
- * Imprime: <valor-pago> <nif> <nome-cliente>
- * @param num número da factura a remover
+ * Executes the invoice mode of command 'd': removes the specified invoice.
+ * Decrements the global totals for items and value (not for issued invoices).
+ * Prints: <amount-paid> <nif> <customer-name>
+ * @param num number of the invoice to remove
  */
 void comando_d_fatura(int num) {
     Fatura *atual = faturas;
@@ -577,14 +577,14 @@ void comando_d_fatura(int num) {
     while (atual != NULL) {
         if (atual->numero == num) {
             printf("%.2f %d %s\n", atual->valor_pago, atual->nif, atual->nome_cliente);
-            
+
             if (anterior == NULL) {
                 faturas = atual->prox;
             } else {
                 anterior->prox = atual->prox;
             }
 
-            /* Actualiza totais globais ao apagar (faturas emitidas não decrementa) */
+            /* Updates global totals upon deletion (issued invoices do not decrement) */
             total_itens_global -= atual->num_itens;
             valor_total_global -= atual->valor_pago;
 
@@ -599,7 +599,7 @@ void comando_d_fatura(int num) {
 }
 
 /*
-Liberta toda a memória alocada pelas facturas.
+Frees all memory allocated by the invoices.
  */
 void faturas_libertar(void) {
     Fatura *atual = faturas;

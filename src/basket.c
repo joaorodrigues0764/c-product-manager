@@ -1,16 +1,16 @@
-#include "cesto.h"
-#include "produtos.h"
+#include "basket.h"
+#include "products.h"
 
-/* Cabeça da lista ligada do cesto. */
+/* Head of the cart's linked list. */
 static ItemCesto *cesto = NULL;
 
 /**
- * Calcula o preço total de uma linha com IVA, com arredondamento simétrico.
- * O epsilon 1e-9 evita erros de representação IEEE 754.
- * @param preco preço unitário sem IVA
- * @param percentagem_iva taxa de IVA em percentagem
- * @param quantidade número de unidades
- * @return preço total com IVA arredondado aos cêntimos
+ * Calculates the total price of a line with VAT, with symmetric rounding.
+ * The 1e-9 epsilon prevents IEEE 754 representation errors.
+ * @param preco unit price without VAT
+ * @param percentagem_iva VAT rate in percentage
+ * @param quantidade number of units
+ * @return total price with VAT rounded to cents
  */
 static double preco_com_iva(double preco, int percentagem_iva,
         int quantidade) {
@@ -20,9 +20,9 @@ static double preco_com_iva(double preco, int percentagem_iva,
 }
 
 /**
- * Procura um item no cesto pelo índice do produto.
- * @param i índice do produto em produtos[]
- * @return ponteiro para o ItemCesto, ou NULL se não estiver no cesto
+ * Searches for an item in the cart by the product index.
+ * @param i product index in products[]
+ * @return pointer to ItemCesto, or NULL if not in the cart
  */
 static ItemCesto *cesto_procura(int i) {
     ItemCesto *atual = cesto;
@@ -39,8 +39,8 @@ static ItemCesto *cesto_procura(int i) {
 
 
 /**
- * Remove um item do cesto e liberta o nó.
- * @param i índice do produto a remover
+ * Removes an item from the cart and frees the node.
+ * @param i index of the product to remove
  */
 static void cesto_remover(int i) {
     ItemCesto *atual = cesto;
@@ -63,11 +63,11 @@ static void cesto_remover(int i) {
 }
 
 /**
- * Imprime um item do cesto no formato do comando a:
- * <iva> <preço-unitário> <quantidade> <preço-total-com-iva> <descrição>
- * @param item item a imprimir
- * @param produtos array de produtos
- * @param iva_tabela tabela de IVA
+ * Prints a cart item in the format of command 'a':
+ * <iva> <unit-price> <quantity> <total-price-with-vat> <description>
+ * @param item item to print
+ * @param produtos array of products
+ * @param iva_tabela VAT table
  */
 static void imprimir_item(const ItemCesto *item, Produto produtos[],
         int iva_tabela[]) {
@@ -83,28 +83,28 @@ static void imprimir_item(const ItemCesto *item, Produto produtos[],
     int quant = item->quantidade;
     double total_da_linha = preco_com_iva(preco_base, percentagem_iva, quant);
 
-    printf("%c %.2f %d %.2f %s\n", 
-           tipo_iva, 
-           preco_base, 
-           quant, 
-           total_da_linha, 
+    printf("%c %.2f %d %.2f %s\n",
+           tipo_iva,
+           preco_base,
+           quant,
+           total_da_linha,
            nome_produto);
 }
 
 /**
- * Verifica se um produto está no cesto.
- * @param i índice do produto em produtos[]
- * @return 1 se está no cesto, 0 caso contrário
+ * Checks if a product is in the cart.
+ * @param i product index in products[]
+ * @return 1 if it is in the cart, 0 otherwise
  */
 int cesto_tem_produto(int i) {
     return cesto_procura(i) != NULL;
 }
 
 /**
- * Lista o conteúdo do cesto por ordem crescente de código EAN.
- * Usa selection sort com array auxiliar para não reordenar a lista.
- * @param produtos array de produtos
- * @param iva_tabela tabela de IVA
+ * Lists the cart's content in ascending order of EAN code.
+ * Uses selection sort with an auxiliary array to avoid reordering the list.
+ * @param produtos array of products
+ * @param iva_tabela VAT table
  */
 static void cesto_listar(Produto produtos[], int iva_tabela[]) {
     ItemCesto *atual, *menor;
@@ -132,7 +132,7 @@ static void cesto_listar(Produto produtos[], int iva_tabela[]) {
     while (impressos < total_itens) {
         menor = NULL;
         int indice_do_menor = -1;
-        
+
         i=0;
         for (atual = cesto; atual != NULL; atual = atual->prox) {
             if (foi_impresso[i] == 1) {
@@ -156,16 +156,16 @@ static void cesto_listar(Produto produtos[], int iva_tabela[]) {
 }
 
 /**
- * Executa o comando a: adiciona, remove ou lista produtos no cesto.
- * Sem args: lista o cesto. Com EAN: adiciona 1 unidade.
- * Com quantidade e EAN: adiciona (positivo) ou remove (negativo).
- * O campo vendido do produto é actualizado em conformidade.
- * @param linha resto da linha após o 'a'
- * @param produtos array de produtos
- * @param num_produtos número de produtos registados
- * @param iva_tabela tabela de IVA
+ * Executes command 'a': adds, removes, or lists products in the cart.
+ * No args: lists the cart. With EAN: adds 1 unit.
+ * With quantity and EAN: adds (positive) or removes (negative).
+ * The product's sold field is updated accordingly.
+ * @param linha rest of the line after 'a'
+ * @param produtos array of products
+ * @param num_produtos number of registered products
+ * @param iva_tabela VAT table
  */
-void comando_a(const char *linha, Produto produtos[], int num_produtos, 
+void comando_a(const char *linha, Produto produtos[], int num_produtos,
               int iva_tabela[]) {
     char ean[EAN_MAX + 1];
     char aux1[MAX_LINHA], aux2[MAX_LINHA];
@@ -220,10 +220,10 @@ void comando_a(const char *linha, Produto produtos[], int num_produtos,
         }
 
         produtos[indice_produto].stock = produtos[indice_produto].stock - quantidade;
-        /* Devolve ao stock e reverte o vendido (quantidade é negativa) */
+        /* Returns to stock and reverts sold (quantity is negative) */
         produtos[indice_produto].vendido += quantidade;
         item_encontrado->quantidade = item_encontrado->quantidade + quantidade;
-        
+
         imprimir_item(item_encontrado, produtos, iva_tabela);
 
         if (item_encontrado->quantidade == 0) {
@@ -238,7 +238,7 @@ void comando_a(const char *linha, Produto produtos[], int num_produtos,
     }
 
     produtos[indice_produto].stock = produtos[indice_produto].stock - quantidade;
-    /* Quantidade no cesto conta como vendida para efeitos de r e l */
+    /* Quantity in the cart counts as sold for the purposes of 'r' and 'l' */
     produtos[indice_produto].vendido += quantidade;
 
     if (item_encontrado != NULL) {
@@ -260,15 +260,15 @@ void comando_a(const char *linha, Produto produtos[], int num_produtos,
 }
 
 /**
- * Devolve o ponteiro para o primeiro item do cesto.
- * @return cabeça da lista, ou NULL se o cesto estiver vazio
+ * Returns a pointer to the first item in the cart.
+ * @return head of the list, or NULL if the cart is empty
  */
 ItemCesto *cesto_obter_lista(void) {
     return cesto;
 }
 
 /**
- * Liberta todos os nós da lista do cesto.
+ * Frees all nodes in the cart list.
  */
 void cesto_libertar(void) {
     ItemCesto *cur = cesto, *prox;

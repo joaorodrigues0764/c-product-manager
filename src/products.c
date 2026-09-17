@@ -1,9 +1,9 @@
-#include "produtos.h"
+#include "products.h"
 
 
 /**
- * Preenche a tabela com os valores de IVA por omissão.
- * @param iva_tabela tabela a inicializar
+ * Fills the table with default VAT values.
+ * @param iva_tabela table to initialize
  */
 void iva_init_default(int iva_tabela[]) {
     for (int i = 0; i < MAX_IVA; i++) {
@@ -16,10 +16,10 @@ void iva_init_default(int iva_tabela[]) {
 }
 
 /**
- * Lê o ficheiro de IVA e preenche a tabela.
- * Formato de cada linha: <LETRA> <percentagem>
- * @param nome_ficheiro caminho para o ficheiro
- * @param tabela_iva tabela a preencher
+ * Reads the VAT file and fills the table.
+ * Format of each line: <LETTER> <percentage>
+ * @param nome_ficheiro path to the file
+ * @param tabela_iva table to fill
  */
 void iva_carregar(const char *nome_ficheiro, int tabela_iva[]) {
     FILE *arquivo = fopen(nome_ficheiro, "r");
@@ -43,11 +43,11 @@ void iva_carregar(const char *nome_ficheiro, int tabela_iva[]) {
 }
 
 /**
- * Valida o dígito de verificação de um EAN-8 ou EAN-13.
+ * Validates the check digit of an EAN-8 or EAN-13.
  * GTIN-13: positions alternate weights 1 and 3, starting with 1.
  * GTIN-8: positions alternate weights 3 and 1, starting with 3.
- * @param ean string com o código EAN
- * @return 1 se válido, 0 caso contrário
+ * @param ean string with the EAN code
+ * @return 1 if valid, 0 otherwise
  */
 int validacao_ean(const char *ean) {
     int len = (int)strlen(ean);
@@ -79,11 +79,11 @@ int validacao_ean(const char *ean) {
 }
 
 /**
- * Procura um produto pelo EAN. Devolve o índice ou -1 se não existir.
- * @param ean código EAN a procurar
- * @param produtos array de produtos
- * @param num_produtos número de produtos registados
- * @return índice do produto, ou -1
+ * Searches for a product by EAN. Returns the index or -1 if it doesn't exist.
+ * @param ean EAN code to search
+ * @param produtos array of products
+ * @param num_produtos number of registered products
+ * @return product index, or -1
  */
 static int procura_produto(const char *ean, Produto produtos[],
         int num_produtos) {
@@ -96,15 +96,15 @@ static int procura_produto(const char *ean, Produto produtos[],
 }
 
 /**
- * Executa o comando p: adiciona um produto novo ou atualiza um existente.
- * Se o EAN já existir, incrementa o stock e actualiza os restantes campos.
- * Erros verificados por ordem: ean, iva, price, quantity, description,
+ * Executes command 'p': adds a new product or updates an existing one.
+ * If the EAN already exists, increments the stock and updates the other fields.
+ * Errors checked in order: ean, iva, price, quantity, description,
  * product in use, invalid product.
- * @param linha resto da linha após o 'p'
- * @param produtos array de produtos
- * @param num_produtos ponteiro para o contador de produtos
- * @param iva_tabela tabela de IVA
- * @param cesto_tem_produto função que verifica se o produto está no cesto
+ * @param linha rest of the line after 'p'
+ * @param produtos array of products
+ * @param num_produtos pointer to the product counter
+ * @param iva_tabela VAT table
+ * @param cesto_tem_produto function that checks if the product is in the cart
  */
 void comando_p(const char *linha, Produto produtos[], int *num_produtos,
         int iva_tabela[], int cesto_tem_produto(int)) {
@@ -119,7 +119,7 @@ void comando_p(const char *linha, Produto produtos[], int *num_produtos,
 		!= 4) {
 		return;
     }
-    /* Avança o ponteiro até ao início da descrição (após os 4 campos) */
+    /* Advances the pointer to the start of the description (after the 4 fields) */
 	{
 		const char *p = linha;
 		int campos = 0;
@@ -142,7 +142,7 @@ void comando_p(const char *linha, Produto produtos[], int *num_produtos,
         printf("invalid ean\n");
         return;
     }
-    
+
     if (iva < 'A' || iva > 'Z' || iva_tabela[iva - 'A'] == -1) {
         printf("invalid iva\n");
         return;
@@ -168,7 +168,7 @@ void comando_p(const char *linha, Produto produtos[], int *num_produtos,
     }
     }
 
-    /* Aceita maiúsculas ASCII (A-Z) e maiúsculas acentuadas UTF-8 (byte > 127) */
+    /* Accepts ASCII uppercase (A-Z) and UTF-8 uppercase with accents (byte > 127) */
     if (!isupper((unsigned char)desc[0]) && (unsigned char)desc[0] <= 127) {
         printf("invalid description\n");
         return;
@@ -187,7 +187,7 @@ void comando_p(const char *linha, Produto produtos[], int *num_produtos,
     posicao = procura_produto(ean, produtos, *num_produtos);
 
     if (posicao != -1) {
-            /* Produto já existe: só bloqueia se o preço mudar e estiver no cesto */
+            /* Product already exists: only blocks if the price changes and it is in the cart */
         if (produtos[posicao].preco != preco && cesto_tem_produto(posicao) == 1) {
             printf("product in use\n");
             return;
@@ -204,7 +204,7 @@ void comando_p(const char *linha, Produto produtos[], int *num_produtos,
         printf("%d\n", produtos[posicao].stock);
     }
     else {
-        //É um produto novo
+        // It is a new product
         if (*num_produtos >= MAX_PRODUTOS) {
             printf("invalid product\n");
             return;
@@ -231,10 +231,10 @@ void comando_p(const char *linha, Produto produtos[], int *num_produtos,
 }
 
 /**
- * Imprime um produto no formato do comando l:
- * <ean> <iva> <preço> <vendido> <stock> <descrição>
- * @param produtos array de produtos
- * @param i índice do produto a imprimir
+ * Prints a product in the format of command 'l':
+ * <ean> <iva> <price> <sold> <stock> <description>
+ * @param produtos array of products
+ * @param i index of the product to print
  */
 static void imprimir_produto(Produto produtos[], int i) {
     printf("%s %c %.2f %d %d %s\n",
@@ -247,12 +247,12 @@ static void imprimir_produto(Produto produtos[], int i) {
 }
 
 /**
- * Verifica se a string str casa com o padrão pat.
- * '*' casa com qualquer sequência de caracteres (incluindo vazia).
- * '?' casa com exactamente um carácter.
- * @param pat padrão com wildcards
- * @param str string a testar
- * @return 1 se casa, 0 caso contrário
+ * Checks if the string str matches the pattern pat.
+ * '*' matches any sequence of characters (including empty).
+ * '?' matches exactly one character.
+ * @param pat pattern with wildcards
+ * @param str string to test
+ * @return 1 if it matches, 0 otherwise
  */
 static int wildcard_match(const char *pat, const char *str) {
     if (*pat == '\0') {
@@ -274,11 +274,11 @@ static int wildcard_match(const char *pat, const char *str) {
 }
 
 /**
- * Lista os produtos com stock > 0 cujo EAN casa com pat.
- * @param pat padrão wildcard
- * @param produtos array de produtos
- * @param num_produtos número de produtos registados
- * @return número de produtos listados
+ * Lists products with stock > 0 whose EAN matches pat.
+ * @param pat wildcard pattern
+ * @param produtos array of products
+ * @param num_produtos number of registered products
+ * @return number of listed products
  */
 static int listar_por_wildcard(const char *pat, Produto produtos[], int num_produtos) {
     int total = 0;
@@ -292,12 +292,12 @@ static int listar_por_wildcard(const char *pat, Produto produtos[], int num_prod
 }
 
 /**
- * Executa o comando l: lista produtos disponíveis.
- * Sem args ou com '*': lista tudo. Com wildcards: filtra por EAN.
- * Emite erro se nenhum produto casar com um wildcard.
- * @param linha resto da linha após o 'l'
- * @param produtos array de produtos
- * @param num_produtos número de produtos registados
+ * Executes command 'l': lists available products.
+ * No args or with '*': lists everything. With wildcards: filters by EAN.
+ * Emits error if no product matches a wildcard.
+ * @param linha rest of the line after 'l'
+ * @param produtos array of products
+ * @param num_produtos number of registered products
  */
 void comando_l(const char *linha, Produto produtos[], int num_produtos) {
     char padrao[MAX_LINHA];
@@ -306,7 +306,7 @@ void comando_l(const char *linha, Produto produtos[], int num_produtos) {
         p++;
     }
     if (*p == '\0' || *p == '\n') {
-        /* Sem args: lista tudo; emite erro se não houver produtos com stock */
+        /* No args: lists everything; emits error if there are no products in stock */
         if (listar_por_wildcard("*", produtos, num_produtos) == 0)
             printf("*: no such product\n");
         return;
@@ -330,10 +330,10 @@ void comando_l(const char *linha, Produto produtos[], int num_produtos) {
 }
 
 /**
- * Remove o produto no índice i deslocando os seguintes para cima.
- * @param produtos array de produtos
- * @param num_produtos ponteiro para o contador de produtos
- * @param i índice do produto a remover
+ * Removes the product at index i by shifting the following ones up.
+ * @param produtos array of products
+ * @param num_produtos pointer to the product counter
+ * @param indice index of the product to remove
  */
 static void produto_remover(Produto produtos[], int *num_produtos, int indice) {
     for (int j = indice; j < *num_produtos - 1; j++) {
@@ -343,13 +343,13 @@ static void produto_remover(Produto produtos[], int *num_produtos, int indice) {
 }
 
 /**
- * Executa o modo EAN do comando d: reduz o stock de um produto.
- * Se o stock chegar a zero, o produto é removido do sistema.
- * @param ean código EAN do produto
- * @param qtd quantidade a retirar do stock (deve ser positiva)
- * @param produtos array de produtos
- * @param num_produtos ponteiro para o contador de produtos
- * @param cesto_tem_produto função que verifica se o produto está no cesto
+ * Executes EAN mode of command 'd': reduces a product's stock.
+ * If the stock reaches zero, the product is removed from the system.
+ * @param ean EAN code of the product
+ * @param qtd amount to remove from stock (must be positive)
+ * @param produtos array of products
+ * @param num_produtos pointer to the product counter
+ * @param cesto_tem_produto function that checks if the product is in the cart
  */
 void comando_d_produto(const char *ean, int qtd, Produto produtos[], int *num_produtos, int cesto_tem_produto(int)) {
     int i, encontrado = -1;
@@ -383,4 +383,3 @@ void comando_d_produto(const char *ean, int qtd, Produto produtos[], int *num_pr
         printf("%d %s\n", produtos[encontrado].stock, produtos[encontrado].desc);
     }
 }
-
